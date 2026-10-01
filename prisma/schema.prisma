@@ -1,0 +1,83 @@
+// Объявляет генератор Prisma Client для Node.js.
+generator client {
+  // Использует стандартный JavaScript-клиент Prisma.
+  provider = "prisma-client-js"
+}
+
+// Объявляет подключение к PostgreSQL через переменную окружения.
+datasource db {
+  // Указывает используемый тип СУБД.
+  provider = "postgresql"
+  // Читает строку подключения из DATABASE_URL.
+  url      = env("DATABASE_URL")
+}
+
+// Описывает состояния задачи.
+enum TaskStatus {
+  // Задача ещё не начата.
+  TODO
+  // Задача выполняется.
+  IN_PROGRESS
+  // Задача завершена.
+  DONE
+}
+
+// Описывает уровни приоритета задачи.
+enum TaskPriority {
+  // Низкий приоритет.
+  LOW
+  // Обычный приоритет по умолчанию.
+  MEDIUM
+  // Высокий приоритет.
+  HIGH
+  // Срочная задача.
+  URGENT
+}
+
+// Описывает проект и его связь с задачами.
+model Project {
+  // Первичный ключ проекта в формате UUID.
+  id          String   @id @default(uuid()) @db.Uuid
+  // Обязательное имя проекта с ограничением длины.
+  name        String   @db.VarChar(120)
+  // Необязательное описание проекта.
+  description String?  @db.Text
+  // Обратная сторона связи проекта с его задачами.
+  tasks       Task[]
+  // Время создания записи.
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+  // Время последнего изменения записи.
+  updatedAt   DateTime @updatedAt @db.Timestamptz(3)
+
+  // Индекс для сортировки проектов по дате создания.
+  @@index([createdAt])
+}
+
+// Описывает задачу, принадлежащую проекту.
+model Task {
+  // Первичный ключ задачи в формате UUID.
+  id          String       @id @default(uuid()) @db.Uuid
+  // Внешний ключ связанного проекта.
+  projectId   String       @db.Uuid
+  // Связь с проектом; удаление проекта удаляет его задачи.
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  // Обязательный заголовок задачи.
+  title       String       @db.VarChar(200)
+  // Необязательное подробное описание задачи.
+  description String?      @db.Text
+  // Текущий статус задачи со значением по умолчанию.
+  status      TaskStatus   @default(TODO)
+  // Приоритет задачи со средним значением по умолчанию.
+  priority    TaskPriority @default(MEDIUM)
+  // Необязательный срок выполнения.
+  dueDate     DateTime?    @db.Timestamptz(3)
+  // Время создания задачи.
+  createdAt   DateTime     @default(now()) @db.Timestamptz(3)
+  // Время последнего изменения задачи.
+  updatedAt   DateTime     @updatedAt @db.Timestamptz(3)
+
+  // Индекс для выборки задач проекта по статусу.
+  @@index([projectId, status])
+  // Индекс для выборки и сортировки по сроку выполнения.
+  @@index([dueDate])
+}

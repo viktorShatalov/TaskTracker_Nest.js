@@ -1,0 +1,91 @@
+# Определяет контейнеры локального окружения.
+services:
+  # Контейнер PostgreSQL для хранения данных.
+  db:
+    # Официальный Alpine-образ PostgreSQL 17.
+    image: postgres:17-alpine
+    # Перезапускает БД при сбоях и старте Docker Desktop.
+    restart: unless-stopped
+    # Создаёт базу и пользователя приложения.
+    environment:
+      # Имя базы данных.
+      POSTGRES_DB: task_tracker
+      # Имя пользователя PostgreSQL.
+      POSTGRES_USER: task_tracker
+      # Пароль из .env или значение для локальной разработки.
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-task_tracker_dev}
+    # Публикует PostgreSQL только на loopback хоста.
+    ports:
+      # Пробрасывает локальный порт к стандартному порту PostgreSQL.
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    # Сохраняет данные при пересоздании контейнера.
+    volumes:
+      # Подключает именованный том к хранилищу PostgreSQL.
+      - postgres_data:/var/lib/postgresql/data
+    # Проверяет готовность базы до старта зависимых служб.
+    healthcheck:
+      # Выполняет стандартную проверку доступности PostgreSQL.
+      test: ["CMD-SHELL", "pg_isready -U task_tracker -d task_tracker"]
+      # Интервал между проверками готовности.
+      interval: 5s
+      # Максимальная длительность одной проверки.
+      timeout: 5s
+      # Число попыток до признания проверки неуспешной.
+      retries: 10
+
+  # Одноразовая служба применения Prisma-схемы.
+  migrate:
+    # Собирает builder-стадию, содержащую Prisma CLI.
+    build:
+      # Использует текущую папку в качестве контекста сборки.
+      context: .
+      # Выбирает стадию с инструментами разработки.
+      target: build
+    # Создаёт или обновляет структуру PostgreSQL по schema.prisma.
+    command: ["npm", "run", "db:push"]
+    # Не перезапускает завершившуюся задачу миграции.
+    restart: "no"
+    # Передаёт строку подключения к базе.
+    environment:
+      # Обращается к базе по имени сервиса внутри Compose-сети.
+      DATABASE_URL: postgresql://task_tracker:${POSTGRES_PASSWORD:-task_tracker_dev}@db:5432/task_tracker?schema=public
+    # Ожидает готовности PostgreSQL перед применением схемы.
+    depends_on:
+      # Объявляет зависимость от базы данных.
+      db:
+        # Ждёт успешного healthcheck PostgreSQL.
+        condition: service_healthy
+
+  # HTTP API приложения.
+  api:
+    # Собирает production-стадию Dockerfile.
+    build:
+      # Использует текущую папку в качестве контекста сборки.
+      context: .
+      # Выбирает минимальный production-образ.
+      target: production
+    # Перезапускает API после сбоев и старта Docker Desktop.
+    restart: unless-stopped
+    # Передаёт настройки runtime-приложению.
+    environment:
+      # Включает production-конфигурацию Node.js.
+      NODE_ENV: production
+      # Настраивает порт сервера внутри контейнера.
+      PORT: 3000
+      # Подключает приложение к контейнеру PostgreSQL.
+      DATABASE_URL: postgresql://task_tracker:${POSTGRES_PASSWORD:-task_tracker_dev}@db:5432/task_tracker?schema=public
+    # Открывает API только для локальных подключений.
+    ports:
+      # Публикует API на выбранном порту хоста.
+      - "127.0.0.1:${API_PORT:-3000}:3000"
+    # Запускает API только после успешного применения схемы.
+    depends_on:
+      # Объявляет задачу подготовки базы зависимостью API.
+      migrate:
+        # Ждёт успешного кода завершения задачи миграции.
+        condition: service_completed_successfully
+
+# Объявляет том с постоянными файлами базы данных.
+volumes:
+  # Именованный том PostgreSQL.
+  postgres_data:
