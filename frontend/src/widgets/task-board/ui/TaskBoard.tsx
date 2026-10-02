@@ -344,6 +344,17 @@ export function TaskBoard({
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
   );
   const activeTask = tasks.find((task) => task.id === activeTaskId);
+  const tasksByStatus = tasks.reduce(
+    (groupedTasks, task) => {
+      groupedTasks[task.status].push(task);
+      return groupedTasks;
+    },
+    {
+      TODO: [],
+      IN_PROGRESS: [],
+      DONE: [],
+    } as Record<Task['status'], Task[]>,
+  );
 
   function handleDragEnd(event: DragEndEvent) {
     setActiveTaskId(null);
@@ -371,7 +382,7 @@ export function TaskBoard({
             <StatusColumn
               key={status}
               status={status}
-              tasks={tasks.filter((task) => task.status === status)}
+              tasks={tasksByStatus[status]}
               onOpenTask={setSelectedTask}
               onPriorityChange={onPriorityChange}
               onDueDateChange={onDueDateChange}

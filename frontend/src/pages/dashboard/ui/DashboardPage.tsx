@@ -47,7 +47,6 @@ export function DashboardPage({ onProjectCountChange }: DashboardPageProps) {
   const isSavingProjectName = Boolean(
     activeProject && updatingProjectIds.has(activeProject.id),
   );
-  const visibleTasks = tasks;
   const isLoading = isLoadingProjects || isLoadingTasks;
   const error = actionError || projectError || taskError;
 
@@ -271,7 +270,7 @@ export function DashboardPage({ onProjectCountChange }: DashboardPageProps) {
           </div>
         ) : (
           <TaskBoard
-            tasks={visibleTasks}
+            tasks={tasks}
             onStatusChange={(taskId, status) =>
               handleTaskUpdate(taskId, { status })
             }
