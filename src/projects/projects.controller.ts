@@ -1,6 +1,7 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateProjectDto } from './dto/create-project.dto.js';
+import { UpdateProjectDto } from './dto/update-project.dto.js';
 import { ProjectsService } from './projects.service.js';
 
 // Группирует маршруты проектов в Swagger.
@@ -29,5 +30,20 @@ export class ProjectsController {
   findAll() {
     // Возвращает найденные проекты.
     return this.projectsService.findAll();
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Обновить проект' })
+  update(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() dto: UpdateProjectDto,
+  ) {
+    return this.projectsService.update(id, dto);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Удалить проект вместе с его задачами' })
+  remove(@Param('id', new ParseUUIDPipe()) id: string) {
+    return this.projectsService.remove(id);
   }
 }

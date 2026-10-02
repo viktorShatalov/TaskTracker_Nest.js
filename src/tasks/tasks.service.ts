@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { toPrismaDate } from '../shared/date/date.utils.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateTaskDto } from './dto/create-task.dto.js';
 import { UpdateTaskDto } from './dto/update-task.dto.js';
@@ -23,7 +24,7 @@ export class TasksService {
     return this.prisma.task.create({
       data: {
         ...dto,
-        dueDate: dto.dueDate ? new Date(dto.dueDate) : null,
+        dueDate: toPrismaDate(dto.dueDate),
       },
     });
   }
@@ -59,7 +60,7 @@ export class TasksService {
       data: {
         ...data,
         ...(dueDate !== undefined
-          ? { dueDate: dueDate ? new Date(dueDate) : null }
+          ? { dueDate: toPrismaDate(dueDate) }
           : {}),
       },
     });

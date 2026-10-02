@@ -20,6 +20,7 @@ export default defineConfig([
     },
     rules: {
       '@typescript-eslint/no-explicit-any': 'error',
+      'max-len': ['error', { code: 130, comments: 130 }],
     },
   },
 ])

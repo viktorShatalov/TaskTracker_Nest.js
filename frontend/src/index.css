@@ -13,4 +13,4 @@
 * { box-sizing: border-box; }
 body { margin: 0; min-width: 320px; }
 h1, h2, h3, h4 { font-family: 'Space Grotesk', sans-serif; }
-button, input, textarea, select { font: inherit; }
+button, input, textarea, select { font-family: inherit; }

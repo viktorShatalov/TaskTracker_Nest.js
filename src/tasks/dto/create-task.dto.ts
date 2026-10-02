@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { TaskPriority, TaskStatus } from '@prisma/client';
+import { TASK_DESCRIPTION_MAX_LENGTH, TASK_TITLE_EXAMPLE, TASK_TITLE_MAX_LENGTH } from '../tasks.constants.js';
 import {
   IsDateString,
   IsEnum,
@@ -20,13 +21,13 @@ export class CreateTaskDto {
   projectId!: string;
 
   // Показывает пример заголовка задачи в Swagger.
-  @ApiProperty({ example: 'Implement sign-in' })
+  @ApiProperty({ example: TASK_TITLE_EXAMPLE })
   // Требует строковый заголовок.
   @IsString()
   // Запрещает пустой заголовок.
   @MinLength(1)
   // Ограничивает заголовок 200 символами.
-  @MaxLength(200)
+  @MaxLength(TASK_TITLE_MAX_LENGTH)
   // Объявляет обязательный заголовок задачи.
   title!: string;
 
@@ -36,14 +37,12 @@ export class CreateTaskDto {
   @IsOptional()
   // Проверяет строковый тип описания.
   @IsString()
-  // Ограничивает описание 10000 символами.
-  @MaxLength(10000)
+  @MaxLength(TASK_DESCRIPTION_MAX_LENGTH)
   // Объявляет необязательное описание задачи.
   description?: string;
 
   // Документирует допустимые статусы задачи.
   @ApiPropertyOptional({ enum: TaskStatus })
-  // Разрешает пропустить статус.
   @IsOptional()
   // Ограничивает значение вариантами TaskStatus.
   @IsEnum(TaskStatus)
@@ -53,7 +52,6 @@ export class CreateTaskDto {
   // Документирует допустимые приоритеты задачи.
   @ApiPropertyOptional({ enum: TaskPriority })
   // Разрешает пропустить приоритет.
-  @IsOptional()
   // Ограничивает значение вариантами TaskPriority.
   @IsEnum(TaskPriority)
   // Объявляет необязательный приоритет задачи.
